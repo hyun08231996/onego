@@ -36,8 +36,8 @@ import MemberCard from '../components/layout/MemberCard.vue'
 			Carousel, MemberCard
 		},
         mounted() {
-            console.log('main user: '+this.$store.state.user.signedIn);
-            console.log(this.$store.state.user.userAccount);
+            // console.log('main user: '+this.$store.state.user.signedIn);
+            // console.log(this.$store.state.user.userAccount);
         }
 	})
 </script>

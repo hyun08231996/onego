@@ -35,7 +35,7 @@
 		  </a>
 	    </div>
 	  </div>
-	  <div style="margin-top:150px;padding-top:25px;padding-bottom:10px;background-color:#FAFAFA;">
+	  <div style="margin-top:40px;padding-top:25px;padding-bottom:10px;background-color:#FAFAFA;">
 	  	<p style="opacity:55%;margin-left:30px;font-size:1.1em;"><em><strong>커서가 깜빡이는 순간, 당신은 이미 작가입니다.</strong></em></p>
 	 	<p style="opacity:55%;margin-left:30px;font-size:1.1em;"><em><strong>ONEGO에서는 작가님을 응원합니다.</strong></em></p>
 	  </div>

@@ -3,15 +3,21 @@
 		<!-- navbar -->
 		<v-app-bar
 		fixed
-		color="white"
+		:color="isDark ? '#121212' : 'white'"
 		elevate-on-scroll
+		tile
 		app
 		>
 		<v-app-bar-nav-icon @click="drawer = true; openMenu()"></v-app-bar-nav-icon>
 
-		<a href="/"><img src="@/assets/logo/onego_logo.jpeg"
+		<a href="/">
+		  <img v-if="darkLogo" src="@/assets/logo/onego_white.png"
 			width="120px" height="43.2px"
-			style="vertical-align:middle;"></a>
+			style="vertical-align:middle;">
+		  <img v-else src="@/assets/logo/onego_black.png"
+			width="120px" height="43.2px"
+			style="vertical-align:middle;">
+		</a>
 
 		<!-- write page -->
 		<div v-if="$route.meta.showHeader == false" >
@@ -29,8 +35,14 @@
 		</div>
 		<!-- other pages -->
 		<div v-else>
-			<div v-if="this.$store.state.user.signedIn==true"><logout-btn /></div>
-			<div v-else><signup-btn /><login-btn @login="isAuth = $event" /></div>
+			<div v-if="$route.meta.showScrap && this.$store.state.user.signedIn==true">
+				<div v-if="isAuthor"><post-update-btn :boardId="id"/><post-delete-btn :boardId="id"/></div>
+				<div v-else><scrap-btn/></div>
+			</div>
+			<div v-else>
+				<div v-if="this.$store.state.user.signedIn==true"><logout-btn /></div>
+				<div v-else><signup-btn /><login-btn @login="isAuth = $event" /></div>
+			</div>
 		</div>
 		<search-modal v-if="$route.meta.showHeader" @openDrawer="drawer = $event" />
 		</v-app-bar>
@@ -149,15 +161,27 @@
 	import PreviewModal from '@/views/PreviewModal.vue'
 	import DeleteBtn from '@/components/buttons/write/DeleteBtn.vue'
 	import SaveBtn from '@/components/buttons/write/SaveBtn.vue'
+	import ScrapBtn from '@/components/buttons/ScrapBtn.vue'
+	import PostDeleteBtn from '@/components/buttons/PostDeleteBtn.vue'
+	import PostUpdateBtn from '@/components/buttons/PostUpdateBtn.vue'
 	import DarkModeSwitch from '@/components/buttons/write/DarkModeSwitch.vue'
 	import SearchModal from '@/views/SearchModal.vue'
+	import { eventBus } from '@/main'
+  
 
 	export default Vue.extend({
+		props: {
+			boardId: String
+		},
 		data: () => ({
+			id: '',
 			userPic: '',
 			drawer: false,
 			group: null,
 			isAuth: true,
+			isDark: false,
+			isAuthor: false,
+			darkLogo: false,
 			showCate:false,
 			showMenu:false,
 			showFooter: true,
@@ -184,7 +208,7 @@
 		components:{
 			'login-btn':LoginBtn, 'logout-btn':LogoutBtn, 'signup-btn':SignupBtn, 'setting-btn':SettingBtn,
 			'delete-btn':DeleteBtn, 'post-btn':PostBtn, 'preview-modal':PreviewModal, 'save-btn':SaveBtn, 'update-btn':UpdateBtn,
-			'dark-switch':DarkModeSwitch, 'search-modal':SearchModal
+			'dark-switch':DarkModeSwitch, 'search-modal':SearchModal, 'scrap-btn':ScrapBtn, 'post-delete-btn':PostDeleteBtn, 'post-update-btn':PostUpdateBtn
 		},
 		methods:{
 			openCategory(){
@@ -200,11 +224,15 @@
 				this.showCate = false;
 			}
 		},
+		created(){
+			eventBus.$on('sameAuthor', (val:boolean)=>{this.isAuthor=val;})
+		 	eventBus.$on('boardId', (val:string)=>{this.id=val;})
+			eventBus.$on('toDark', (val:boolean)=>{this.isDark=val; this.darkLogo=val;})
+			eventBus.$on('toLight', (val:boolean)=>{this.isDark=val; this.darkLogo=val;})
+		},
 		beforeMount(){
-			console.log("header")
 			var userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
 			this.userPic = userInfo.profileImage
-			console.log(this.userPic)
 		}
 	})
 </script>

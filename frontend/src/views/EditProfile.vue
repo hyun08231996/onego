@@ -172,17 +172,14 @@
 				userInfo.intro = this.user.intro
 				userInfo.nickName = this.user.nickname
 				await http
-					.get('/users/'+this.user.email, {
-						headers:{
-							'Authorization': 'Bearer '+localStorage.getItem('accessToken')
-						}})
+					.get('/users/'+this.user.email)
 					.then(response => {
 						userInfo.profileImage = response.data.profileImage
 					})
 				localStorage.setItem('userInfo', JSON.stringify(userInfo))
 
 				// 화면 새로고침
-				//window.location.reload()
+				window.location.reload()
 			},
 			selectImg(){
 				document.getElementById("fileUpload").click();

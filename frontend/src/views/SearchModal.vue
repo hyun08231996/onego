@@ -67,7 +67,7 @@
 			</div>
 		</v-flex>
 		<!-- user list -->
-		<div align="center" id="table-container" v-if="isTable">
+		<!-- <div align="center" id="table-container" v-if="isTable">
 			<v-simple-table style="text-align:center;">
 				<tr>
 					<td v-for="user in userList" :key="user.name">
@@ -83,7 +83,7 @@
 					</td>
 				</tr>
 			</v-simple-table>
-		</div>
+		</div> -->
 
       </v-card>
 
@@ -118,13 +118,7 @@
 			notifications: false,
 			sound: true,
 			widgets: false,
-			userList:[
-				{name: 'User1', img: 'https://randomuser.me/api/portraits/women/82.jpg', intro: 'Hello everyone Hello everyone Hello everyone'},
-				{name: 'User2', img: 'https://randomuser.me/api/portraits/men/82.jpg', intro: 'Hello everyone'},
-				{name: 'User3', img: 'https://randomuser.me/api/portraits/women/83.jpg', intro: 'Hello everyone'},
-				{name: 'User4', img: 'https://randomuser.me/api/portraits/men/83.jpg', intro: 'Hello everyone'},
-				{name: 'User5', img: 'https://randomuser.me/api/portraits/women/84.jpg', intro: 'Hello everyone'},
-			],//get 5 random users from db
+			// userList:[],//get 5 random users from db
 			blogList:[] as BlogList[]
 		}),
 		components: {
@@ -163,11 +157,12 @@
 				//     get('/users', )
 				await http.
 					get('/board/count',{
-						headers:{
-							'Authorization': 'Bearer '+localStorage.getItem('accessToken')
-						}
+						// headers:{
+						// 	'Authorization': 'Bearer '+localStorage.getItem('accessToken')
+						// }
 					})
 					.then(response => {
+						//console.log(response.data)
                        this.totalPageNum = Math.ceil(response.data / 5)
 					   //console.log(this.totalPageNum)
 					})
@@ -195,7 +190,8 @@
 						const nickname = response.data[i].nickName
 						const title = response.data[i].title
 						const content = response.data[i].contents[0].content
-						var allText = response.data[i].subtitle
+						let allText:string
+						allText = response.data[i].subtitle
 						for(let j=0;j<response.data[i].contents.length;j++){
 							allText += response.data[i].contents[j].title+response.data[i].contents[j].subtitle+response.data[i].contents[j].content
 						}

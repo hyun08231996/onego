@@ -7,8 +7,8 @@
             <li v-for="error in errors">{{ error }}</li>
             </ul>
         </p> -->
-        <v-text-field ref="registerEmail" label="이메일" v-model="registerEmail"></v-text-field>
-        <v-text-field label="닉네임" v-model="nickname"></v-text-field>
+        <v-text-field ref="registerEmail" label="이메일" v-model="registerEmail" color="#00d5aa"></v-text-field>
+        <v-text-field label="닉네임" v-model="nickname" color="#00d5aa"></v-text-field>
         <v-text-field
             v-model="password"
             :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'" 
@@ -18,6 +18,7 @@
             label="비밀번호"
             hint="At least 8 characters"
             counter
+            color="#00d5aa"
             @click:append="show1 = !show1"
             @keyup.enter="signUpCheck"
         ></v-text-field><br>

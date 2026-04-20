@@ -71,7 +71,6 @@
             this.user.email = this.$store.state.user.userAccount.attributes.email
             this.user.intro = userInfo.intro
             this.user.pic = userInfo.profileImage
-            console.log(this.user.pic)
         }
     })
 </script>

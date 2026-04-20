@@ -124,9 +124,9 @@
 				 params:{
 					 'userEmail':this.$store.state.user.userAccount.attributes.email
 				 },
-				 headers:{
-					'Authorization': 'Bearer '+localStorage.getItem('accessToken')
-				 }
+				//  headers:{
+				// 	'Authorization': 'Bearer '+localStorage.getItem('accessToken')
+				//  }
 			 })
              .then(response => {
 				 //console.log('board: '+response.data)

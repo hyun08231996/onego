@@ -154,6 +154,8 @@ const routes: Array<RouteConfig> = [
 	{
 		path:"/content/:boardId",
 		name: "Content",
+		meta:{ showScrap: true },
+		props:true,
 		component: Content,
 	},
 	{

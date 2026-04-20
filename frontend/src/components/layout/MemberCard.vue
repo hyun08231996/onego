@@ -2,7 +2,7 @@
   <div class="align-center member-card">
     <v-container>
 
-      <v-row no-gutters >
+      <v-row no-gutters  id="memberCard">
         <!-- col 1 -->
         <v-col>
           <v-card :loading="loading" class="mx-auto my-12" max-width="374">
@@ -23,7 +23,7 @@
                 AI Developer
               </div>
 
-              <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
+              <div>When you're feeling a bit <br>out of sorts, don't worry!<br>You're probably just hungry</div>
             </v-card-text>
 
             <v-divider class="mx-4"></v-divider>
@@ -47,7 +47,7 @@
                 DEVOPS
               </div>
 
-              <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
+              <div>I want to make the world <br>more convenient.</div>
             </v-card-text>
 
             <v-divider class="mx-4"></v-divider>
@@ -74,7 +74,7 @@
                 FE Developer
               </div>
 
-              <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
+              <div>새로운 도전을 하는걸 <br>좋아합니다</div>
             </v-card-text>
 
             <v-divider class="mx-4"></v-divider>
@@ -98,7 +98,7 @@
                 FE Developer
               </div>
 
-              <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
+              <div>It's not a problem, <br> it's just a challenge</div>
             </v-card-text>
 
             <v-divider class="mx-4"></v-divider>
@@ -126,7 +126,7 @@
                 FE Developer
               </div>
 
-              <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
+              <div>Never give up because <br>great things take time.</div>
             </v-card-text>
 
             <v-divider class="mx-4"></v-divider>
@@ -138,7 +138,7 @@
 
             <v-avatar>
               <img
-                src="@/assets/profile/dog2.jpg"
+                src="@/assets/profile/jaeho.jpg"
                 alt="이재호"
               >
             </v-avatar>
@@ -150,7 +150,7 @@
                 BE Developer
               </div>
 
-              <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
+              <div>실험이 많을수록, <br>더 좋은 결과를 이끌어낸다.</div>
             </v-card-text>
 
             <v-divider class="mx-4"></v-divider>
@@ -178,7 +178,7 @@
                 AI Developer
               </div>
 
-              <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
+              <div>With hard work and effort, <br>you can achieve anything.</div>
             </v-card-text>
 
             <v-divider class="mx-4"></v-divider>
@@ -202,7 +202,7 @@
                 BE Developer
               </div>
 
-              <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
+              <div>판.교.좋.아.</div>
             </v-card-text>
 
             <v-divider class="mx-4"></v-divider>
@@ -254,5 +254,9 @@
   .align-center{
     /* align-items: center; */
     text-align: center
+  }
+
+  #memberCard .v-card__text{
+    height: 140px;
   }
 </style>

@@ -1,7 +1,7 @@
 <template>
     <v-card-text>
         <p class="text-h4 text--primary">LOGIN</p><br>
-        <v-text-field ref="email" label="이메일" v-model="email"></v-text-field>
+        <v-text-field ref="email" label="이메일" v-model="email" color="#00d5aa"></v-text-field>
         <v-text-field
             v-model="password"
             :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
@@ -10,6 +10,7 @@
             name="input-10-1"
             label="비밀번호"
             counter
+            color="#00d5aa"
             @click:append="show1 = !show1" @keyup.enter="login"
         ></v-text-field>
         <br>
@@ -64,9 +65,10 @@ import http from '../../http/http-common'
             async getUserInfo(){
                 await http
                     .get('/users/'+this.email,{
-						headers:{
-							'Authorization': 'Bearer '+localStorage.getItem('accessToken')
-						}})
+						// headers:{
+						// 	'Authorization': 'Bearer '+localStorage.getItem('accessToken')
+						// }
+                    })
                     .then(response => {
                         this.$store.commit('setUserInfo', response.data);
                         localStorage.setItem('userInfo', JSON.stringify(response.data))
