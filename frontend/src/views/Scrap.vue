@@ -14,12 +14,12 @@
               <p v-html="article.contents ? article.contents : ''"></p>
             </v-card-text>
 
-            <v-card-actions class="avatar-box">
+            <v-card-actions class="avatar-box"  @click="writerProfile($event, article.userEmail)">
                 <v-list-item-avatar class="page-avatar" color="grey darken-3" style="width: 15px; height: 15px;">
                   <v-img
                     class="avatar"
                     alt="avatar"
-                    src="https://avataaars.io/?avatarStyle=Transparent&topType=ShortHairShortCurly&accessoriesType=Prescription02&hairColor=Black&facialHairType=Blank&clotheType=Hoodie&clotheColor=White&eyeType=Default&eyebrowType=DefaultNatural&mouthType=Default&skinColor=Light"
+                    :src="article.titleImage"
                   ></v-img>
                 </v-list-item-avatar>
                 <v-list-item-content class="author-date">
@@ -50,6 +50,13 @@ import http from '../http/http-common'
         scrapId: {},
 		  }),
       methods: {
+        writerProfile(e, writerEmail){
+            e.stopPropagation()
+            this.$router.push({
+                name: "MyProfile",
+                params: { emailProp: writerEmail },
+            });
+        },
         getContents(boardId){
           http
             .get('/board', {
@@ -58,6 +65,16 @@ import http from '../http/http-common'
                   'Authorization': 'Bearer '+localStorage.getItem('accessToken')
                 }})
               .then(response => {
+                http 
+                  .get('/users/'+response.data[0].userEmail)
+                  .then(r => {
+                      response.data[0].nickName = r.data.nickName
+                      if(r.data.profileImage != undefined){
+                        response.data[0].titleImage = r.data.profileImage
+                      }else{
+                        response.data[0].titleImage = ''
+                      }
+                  })
                 if(response.data.length !=0){
                   response.data.forEach((d) => {
                     if(d.contents.length != 0){
@@ -76,7 +93,7 @@ import http from '../http/http-common'
         },
         async getScrapId(){
           var userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-          this.scrapId = userInfo.scraps
+          this.scrapId = userInfo.likes
           for(let i = 0; i< this.scrapId.length; i++){
               this.getContents(this.scrapId[i])
           }
@@ -107,7 +124,7 @@ import http from '../http/http-common'
 		font-family: "Noto Sans KR", sans-serif !important;
 	}
   .card{
-    margin: 0px 15px 0px 15px;
+    padding: 15px;
   }
   .text{
     padding-top: 30px;

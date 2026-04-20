@@ -114,9 +114,7 @@ export default Vue.extend({
         },
         async boardCount(){
           await http
-              .get('/board/count',{headers:{
-                        'Authorization': 'Bearer '+localStorage.getItem('accessToken')
-                    }})
+              .get('/board/count')
               .then(response => {
                       this.totalPageNum = Math.floor(response.data / 5) + 1
                     }
@@ -143,7 +141,7 @@ export default Vue.extend({
 		font-family: "Noto Sans KR", sans-serif !important;
 	}
   .card{
-    margin: 0px 15px 0px 15px;
+    padding: 15px;
   }
   .text{
     padding-top: 30px;

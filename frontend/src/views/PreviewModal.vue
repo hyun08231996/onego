@@ -135,7 +135,7 @@
 	left:25% !important;
 }
 #image-card .v-image__image{
-	opacity:60% !important;
+	opacity:0.7 !important;
 }
 #title-content-preview-margin,
 #content-preview-margin,

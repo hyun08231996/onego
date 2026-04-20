@@ -7,29 +7,35 @@
            max-width="55%"
            max-height="600"
            tile
-         >
-           <div class="card" @click="articlePage(article.id)">
+         >  
+           <div id="content-hover" class="card" @click="articlePage(article.id)">
+             <v-img
+               v-if="article.titleImage"
+               :src="article.titleImage"
+               height="200"
+               class="article-cover"
+             />
              <v-card-text class="text newest-article">
-               <h2 v-html="article.title"></h2><br>
+               <h2 id="content-title" v-html="article.title"></h2><br>
                <!-- <h3 style="font-weight: normal" v-html="article.subtitle"></h3> -->
                <p v-html="article.contents ? article.contents : ''"></p>
              </v-card-text>
 
-             <v-card-actions class="avatar-box">
-                 <v-list-item-avatar class="page-avatar" color="grey darken-3" style="width: 15px; height: 15px;">
-                   <v-img
-                     class="avatar"
-                     alt="avatar"
-                     src="https://avataaars.io/?avatarStyle=Transparent&topType=ShortHairShortCurly&accessoriesType=Prescription02&hairColor=Black&facialHairType=Blank&clotheType=Hoodie&clotheColor=White&eyeType=Default&eyebrowType=DefaultNatural&mouthType=Default&skinColor=Light"
-                   ></v-img>
-                 </v-list-item-avatar>
-                 <v-list-item-content class="author-date">
-                   <span class="nickname" v-html="article.nickName"></span>
-
-                 </v-list-item-content>
+             <v-card-actions class="avatar-box" @click="writerProfile($event, article.userEmail)">
+                <!-- <div id="userProfile" @click="writerProfile($event, article.email)"> -->
+                  <v-list-item-avatar class="page-avatar" color="grey darken-3" style="width: 15px; height: 15px;">
+                    <v-img
+                      class="avatar"
+                      alt="avatar"
+                      :src="article.profileImage"
+                    ></v-img>
+                  </v-list-item-avatar>
+                  <v-list-item-content class="author-date">
+                    <span class="nickname" v-html="article.nickName"></span>
+                  </v-list-item-content>
+                 <!-- </div> -->
                  <span class="right-padding">{{dateTime(article.modDatetime)}}</span>
              </v-card-actions>
-             <br/>
            </div>
          </v-card>
          <br>
@@ -46,35 +52,66 @@
 <script lang="ts">
 import Vue from 'vue'
 import http from '../http/http-common'
+import { eventBus } from '@/main'
 
 export default Vue.extend({
      data: () => ({
-       articles: {},
-       errored: false,
-       loading: true,
-       content: '',
-       page: 1,
-       totalPageNum: 1
+      articles: {},
+      errored: false,
+      loading: true,
+      content: '',
+      page: 1,
+      totalPageNum: 1
      }),
      methods: {
+       writerProfile(e: any, writerEmail: string){
+            e.stopPropagation()
+            this.$router.push({
+                name: "MyProfile",
+                params: { emailProp: writerEmail },
+            });
+        },
        async getArticles(pageNum: number){
          await http
              .get('/board', {
                params: { 'pageNumber': pageNum }})
-             .then(response => {
-                 response.data.forEach((d: any) => {
-                   if(d.contents.length != 0){
-                     if(d.contents[0].content.length > 150){
-                       d.contents = d.contents[0].content.substr(0,148)+"..."
-                     }else{
-                       d.contents = d.contents[0].content
-                     }
-                   }else{
-                     d.contents = ""
-                   }
+             .then(async response => {
+                const enrichedArticles = await Promise.all(
+                  response.data.map(async (d: any) => {
+                    let nickName = d.nickName;
+                    let profileImage = '';
 
-                 })
-                 this.articles = response.data;
+                    try {
+                      const userResponse = await http.get('/users/' + d.userEmail);
+                      nickName = userResponse.data.nickName;
+                      profileImage = userResponse.data.profileImage || '';
+                    } catch (error) {
+                      profileImage = '';
+                    }
+
+                    let previewContent = "";
+                    if (d.contents.length !== 0) {
+                      const primaryContent =
+                        d.contents[0].content.length !== 0
+                          ? d.contents[0].content
+                          : (d.contents[1]?.content || "");
+
+                      previewContent =
+                        primaryContent.length > 100
+                          ? primaryContent.substr(0, 97) + "..."
+                          : primaryContent;
+                    }
+
+                    return {
+                      ...d,
+                      nickName,
+                      profileImage,
+                      contents: previewContent,
+                    };
+                  })
+                );
+
+                this.articles = enrichedArticles;
              })
              .catch(() => {
                this.errored = true
@@ -112,12 +149,16 @@ export default Vue.extend({
        async boardCount(){
          await http
              .get('/board/count',{
-				 headers:{
-					'Authorization': 'Bearer '+localStorage.getItem('accessToken')
-				 }
+				//  headers:{
+				// 	'Authorization': 'Bearer '+localStorage.getItem('accessToken')
+				//  }
 			 })
              .then(response => {
-                     this.totalPageNum = Math.floor(response.data / 5) + 1
+                    if(response.data%5==0){
+                      this.totalPageNum = Math.floor(response.data / 5)
+                    }else{
+                      this.totalPageNum = Math.floor(response.data / 5) + 1
+                    }
                    }
                  )
              .catch(() => this.errored = true )
@@ -132,6 +173,7 @@ export default Vue.extend({
        this.getArticles(1)
        this.boardCount()
      }
+     
    })
 
 </script>
@@ -140,7 +182,10 @@ export default Vue.extend({
    font-family: "Noto Sans KR", sans-serif !important;
  }
  .card{
-   margin: 0px 15px 0px 15px;
+    padding: 15px;
+ }
+ .article-cover{
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
  }
  .text{
    padding-top: 30px;
@@ -172,5 +217,11 @@ export default Vue.extend({
    height: 50px !important;
    min-width: 50px !important;
    width: 50px !important;
+ }
+ #content-hover:hover{
+   cursor: pointer;
+ }
+ #content-hover:hover #content-title{
+   color:#00d5aa;
  }
 </style>
