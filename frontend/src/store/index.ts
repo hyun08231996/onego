@@ -57,27 +57,23 @@ const index: StoreOptions<RootState> = {
     }
   },
   actions: {
-    findUser: async function(){
-      try{
-        await Auth.currentAuthenticatedUser()
-          .then(user => {
-                this.state.user.signedIn = !!user;
-                this.state.user.userAccount = user;
-                Auth.currentSession()
-                    .then((result: any) => {
-                        this.state.accessToken = result.accessToken.jwtToken;
-                })
+    findUser: async function({ commit }){
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        commit('changeSignedInState', user);
 
-            })
-          .catch(err => {
-              console.log(err)
-              this.state.user.signedIn = false;
-              this.state.user.userAccount = {};
+        const result: any = await Auth.currentSession();
+        commit('setAccessToken', result.accessToken.jwtToken);
+        localStorage.setItem('accessToken', result.accessToken.jwtToken);
 
-          });
-      }
-      catch (error) {
-          console.log('not signed in', error);
+        const storedUserInfo = localStorage.getItem('userInfo');
+        if (storedUserInfo) {
+          commit('setUserInfo', JSON.parse(storedUserInfo));
+        }
+      } catch (error) {
+        console.log('not signed in', error);
+        commit('changeSignedInState', null);
+        commit('setAccessToken', '');
       }
     },
     // setU
