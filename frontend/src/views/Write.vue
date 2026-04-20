@@ -8,25 +8,27 @@
 		<div id="editor-size">
 
 		  <div style="width:100%;float:left;">
-			  <v-card class="title-card" height="6.1vh" elevation="2" color="#f5f5f5">
+			  <v-card class="title-card" height="6.1vh" elevation="2" :color="isDark?'#282828':'#f5f5f5'">
 				<!-- 제목 -->
 				<div style="width:50%;height:6.1vh;padding-top:4px;padding-bottom:4px;float:left;">
 				  <v-text-field class="mx-2"
 				    v-model="title"
 				  	height="5.1vh"
 					color="#00d5aa"
-					background-color="white"
+					:background-color="isDark?'#1e1e1e':'white'"
 					:placeholder="titlePlace"
 					:label="titleLabel"
 					dense outlined/>
 				</div>
 				<!-- 소제목 -->
 				<div style="width:50%;height:6.1vh;padding-top:4px;padding-bottom:4px;float:left;">
+					
+					
 				  <v-text-field class="mx-2"
 				    v-model="subtitle"
 				  	height="5.1vh"
 					color="#00d5aa"
-					background-color="white"
+					:background-color="isDark?'#1e1e1e':'white'"
 					:placeholder="subtitlePlace"
 					:label="subtitleLabel"
 					dense outlined>
@@ -41,6 +43,11 @@
 					  </v-hover>
 					</template>
 				  </v-text-field>
+				  <v-progress-linear v-if="isLoading"
+					indeterminate
+					absolute
+					height="2"
+					color="#00d5aa"/>
 				</div>
 			  </v-card>
 		  </div>
@@ -48,6 +55,7 @@
 		  <div style="width:100%;float:left;">
 			<tiptap-vuetify id="text-editor"
 				v-model="content"
+				:toolbar-attributes="{ color: isDark?'#282828':'#f5f5f5' }"
 				:extensions="extensions"
 				:native-extensions="nativeExtensions"
 				:disabled="isActive"
@@ -55,6 +63,16 @@
 				placeholder="글 내용을 입력하세요"
 				>
 			</tiptap-vuetify>
+			<div
+				v-if="showInlineSuggestion"
+				class="inline-autocomplete-shell"
+				:class="{ 'inline-autocomplete-shell--dark': isDark }">
+				<div v-if="isInlineLoading" class="inline-autocomplete-hint">AI가 문장을 이어 쓰는 중...</div>
+				<div v-else class="inline-autocomplete-suggestion" @click="acceptInlineSuggestion">
+					<span class="inline-autocomplete-label">Tab</span>
+					<span class="inline-autocomplete-text">{{ inlineSuggestion }}</span>
+				</div>
+			</div>
 		  </div>
 		  <!-- 태그 입력, 이미지 선택, 글자수 -->
 		  <tag />
@@ -136,6 +154,13 @@
 		loading = true
 		content = ''
 		isActive = false
+		isLoading = false
+		isDark = false
+		inlineSuggestion = ''
+		isInlineLoading = false
+		private autocompleteTimer: ReturnType<typeof setTimeout> | null = null
+		private autocompleteRequestId = 0
+		private suppressAutocomplete = false
 
 		@Watch('activeVal')
 		watchActiveVal():void{
@@ -168,6 +193,11 @@
 			//console.log(this.content)
 			this.setContent(this.content)
 			this.updateContent(this.content)
+			if(this.suppressAutocomplete){
+				this.suppressAutocomplete = false
+				return
+			}
+			this.scheduleInlineAutocomplete()
 		}
 
 		@Watch('getTitle')
@@ -233,15 +263,155 @@
 		@WriteStoreModule.Getter('getItemList') private itemList!:any[]
 
 		created(){
+			eventBus.$on('toDark', (val:boolean)=>{this.isDark=val;})
+			eventBus.$on('toLight', (val:boolean)=>{this.isDark=val;})
 			history.pushState(null, '', document.URL)
 			window.onpopstate = () => {
 				this.confirmBack()
 				history.pushState(null, '', document.URL)
 			}
-			if(this.tempBoardId !== undefined) this.editTempBoard(this.tempBoardId)
-			if(this.boardId !== undefined) this.editBoard(this.boardId)
+			if(this.tempBoardId !== undefined && this.boardId == undefined) this.editTempBoard(this.tempBoardId)
+			if(this.boardId !== undefined && this.tempBoardId == undefined) this.editBoard(this.boardId)
 			//this.content = this.getContent
 			//console.log(this.getId)
+		}
+
+		mounted():void{
+			window.addEventListener('keydown', this.handleGlobalKeydown)
+		}
+
+		beforeDestroy():void{
+			window.removeEventListener('keydown', this.handleGlobalKeydown)
+			if(this.autocompleteTimer){
+				clearTimeout(this.autocompleteTimer)
+			}
+		}
+
+		get showInlineSuggestion():boolean{
+			return this.isInlineLoading || this.inlineSuggestion.length > 0
+		}
+
+		private getActivePlainText():string{
+			if(this.activeVal === 1){
+				return this.itemList[0]?.text || ''
+			}
+			if(this.activeVal > 1){
+				for(let i=0; i<this.itemList[0].children.length; i++){
+					if(this.activeVal === this.itemList[0].children[i].id){
+						return this.itemList[0].children[i].text || ''
+					}
+				}
+			}
+			return ''
+		}
+
+		private getActiveSentenceSeed():string{
+			const plainText = this.getActivePlainText().replaceAll('\n', ' ').trim()
+			if(plainText.length === 0){
+				return ''
+			}
+			const sentenceChunks = plainText.split(/(?<=[.?!])\s+/).filter(Boolean)
+			const lastSentence = sentenceChunks.length > 0 ? sentenceChunks[sentenceChunks.length - 1] : plainText
+			return lastSentence.trim()
+		}
+
+		private emitAutocompleteState(suggestions:string[], loading:boolean):void{
+			eventBus.$emit('autocompleteResults', suggestions)
+			eventBus.$emit('autocompleteLoading', loading)
+		}
+
+		private clearInlineSuggestion():void{
+			this.inlineSuggestion = ''
+			this.isInlineLoading = false
+			this.emitAutocompleteState([], false)
+		}
+
+		private scheduleInlineAutocomplete():void{
+			if(this.autocompleteTimer){
+				clearTimeout(this.autocompleteTimer)
+			}
+
+			const sentenceSeed = this.getActiveSentenceSeed()
+			if(this.isActive || sentenceSeed.length < 8){
+				this.clearInlineSuggestion()
+				return
+			}
+
+			this.isInlineLoading = true
+			this.inlineSuggestion = ''
+			this.emitAutocompleteState([], true)
+
+			this.autocompleteTimer = setTimeout(() => {
+				this.requestInlineAutocomplete(sentenceSeed)
+			}, 800)
+		}
+
+		private requestInlineAutocomplete(sentenceSeed:string):void{
+			const requestId = ++this.autocompleteRequestId
+			const form = new FormData()
+			form.append('text', sentenceSeed)
+
+			http
+				.post('/ai/complete', form)
+				.then(response => {
+					if(requestId !== this.autocompleteRequestId){
+						return
+					}
+					const suggestions = Array.isArray(response.data) ? response.data.filter((item:string) => !!item) : []
+					const topSuggestion = suggestions.length > 0 ? suggestions[0] : ''
+					this.inlineSuggestion = topSuggestion
+					this.isInlineLoading = false
+					this.emitAutocompleteState(suggestions, false)
+				})
+				.catch(() => {
+					if(requestId !== this.autocompleteRequestId){
+						return
+					}
+					this.clearInlineSuggestion()
+				})
+		}
+
+		private isEditorFocused():boolean{
+			const activeElement = document.activeElement as HTMLElement | null
+			if(!activeElement){
+				return false
+			}
+			return activeElement.classList.contains('ProseMirror') || !!activeElement.closest('.ProseMirror')
+		}
+
+		private handleGlobalKeydown = (event: KeyboardEvent):void => {
+			if(event.key !== 'Tab' || !this.inlineSuggestion || !this.isEditorFocused()){
+				return
+			}
+			event.preventDefault()
+			this.acceptInlineSuggestion()
+		}
+
+		private acceptInlineSuggestion():void{
+			const activeText = this.getActivePlainText()
+			if(activeText.length === 0 || this.inlineSuggestion.length === 0){
+				return
+			}
+
+			const separator = /\s$/.test(activeText) ? '' : ' '
+			const updatedText = `${activeText}${separator}${this.inlineSuggestion}`.trim()
+			const htmlContent = `<p>${updatedText.replaceAll('\n', '</p><p>')}</p>`
+
+			this.suppressAutocomplete = true
+			if(this.activeVal === 1){
+				this.itemList[0].text = updatedText
+			}else if(this.activeVal > 1){
+				for(let i=0; i<this.itemList[0].children.length; i++){
+					if(this.activeVal === this.itemList[0].children[i].id){
+						this.itemList[0].children[i].text = updatedText
+					}
+				}
+			}
+
+			this.content = htmlContent
+			this.setContent(this.content)
+			this.updateContent(this.content)
+			this.clearInlineSuggestion()
 		}
 
 		confirmBack():void{
@@ -293,16 +463,16 @@
 					}
 				})
 				.then(response => {
-					console.log(response.data)
+					//console.log(response.data[0].id)
 					this.setId(response.data[0].id)
 					this.setMainTitle(response.data[0].title)
 					this.setMainSubtitle(response.data[0].subtitle)
 					this.setItemList(response.data[0].contents)
 					this.setTagList(response.data[0].tags)
-					// this.setMemoList(response.data[0].memos)
+					this.setMemoList(response.data[0].memos)
 					this.setImageUrl(response.data[0].titleImage)
 					//console.log(this.getId)
-					eventBus.$emit("clickFirstTree")
+					eventBus.$emit("clickFirstTreePost")
 				})
 				.catch(() => this.errored = true )
 				.finally(() => {
@@ -311,29 +481,113 @@
 		}
 
 		generateSub():void{
+			this.isLoading = true
+
 			var subtitle = ''
 
 			var contentList = [] as string[]
 			var contents = [] as string[]
-			contentList.push(this.itemList[0].text.replaceAll("\n"," ").replaceAll("</p><p>"," "))
+			contentList.push(this.itemList[0].text.replaceAll("\n"," ").replaceAll("</p><p>"," ")
+									.replaceAll("<strong>","").replaceAll("</strong>","")
+									.replaceAll("<em>","").replaceAll("</em>","")
+									.replaceAll("<u>","").replaceAll("</u>",""))
 			if(this.itemList[0].children.length !== 0){
 				for(var i=0; i<this.itemList[0].children.length;i++){
-					contentList.push(this.itemList[0].children[i].text.replaceAll("\n"," ").replaceAll("</p><p>"," "))
+					contentList.push(this.itemList[0].children[i].text.replaceAll("\n"," ").replaceAll("</p><p>"," ")
+												.replaceAll("<strong>","").replaceAll("</strong>","")
+												.replaceAll("<em>","").replaceAll("</em>","")
+												.replaceAll("<u>","").replaceAll("</u>",""))
 				}
 			}
 			contents.push(contentList.join(" "))
 			console.log(contents)
 
-			////////////////axios here///////////////////
+			http.
+				post('/ai/summarizer',
+					{"contents":contents}
+				)
+				.then(response=>{
+					if (response.status >=200 && response.status < 204){
+						//console.log(response)
+						console.log("success")
+						subtitle = response.data
+						this.subtitle = subtitle
+						this.isLoading = false
+					} else{
+						//console.log(response)
+						console.log("fail..")
+					}
+				})
 
-			//this.subtitle = subtitle
+			
 		}
 
 	}
 </script>
 
 <style>
-/* .v-application .write-header-color .white{
-	background-color:#282828 !important;
-} */
+.inline-autocomplete-shell{
+	padding: 10px 14px 14px;
+	background: linear-gradient(90deg, rgba(0, 213, 170, 0.08), rgba(255, 255, 255, 0.86), rgba(0, 213, 170, 0.08));
+	border-top: 1px solid rgba(0, 213, 170, 0.18);
+	cursor: pointer;
+}
+
+.inline-autocomplete-shell--dark{
+	background: linear-gradient(90deg, rgba(0, 213, 170, 0.08), rgba(40, 40, 40, 0.92), rgba(0, 213, 170, 0.08));
+}
+
+.inline-autocomplete-suggestion{
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: rgba(70, 70, 70, 0.9);
+}
+
+.inline-autocomplete-shell--dark .inline-autocomplete-suggestion{
+	color: rgba(245, 245, 245, 0.92);
+}
+
+.inline-autocomplete-label{
+	flex: 0 0 auto;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	color: #00a886;
+	background: rgba(0, 213, 170, 0.14);
+}
+
+.inline-autocomplete-text{
+	position: relative;
+	display: inline-block;
+	opacity: 0.82;
+	overflow: hidden;
+}
+
+.inline-autocomplete-text::after{
+	content: "";
+	position: absolute;
+	inset: 0;
+	transform: translateX(-120%);
+	background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent);
+	animation: inline-autocomplete-shimmer 2.2s infinite;
+	pointer-events: none;
+}
+
+.inline-autocomplete-hint{
+	font-size: 0.9rem;
+	color: rgba(90, 90, 90, 0.78);
+}
+
+.inline-autocomplete-shell--dark .inline-autocomplete-hint{
+	color: rgba(240, 240, 240, 0.72);
+}
+
+@keyframes inline-autocomplete-shimmer{
+	100%{
+		transform: translateX(120%);
+	}
+}
 </style>
