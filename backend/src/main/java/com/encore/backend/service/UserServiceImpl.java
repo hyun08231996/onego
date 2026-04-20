@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.encore.backend.dto.UserDto;
 import com.encore.backend.repository.user.UserRepository;
-import com.encore.backend.s3.S3Uploader;
+import com.encore.backend.storage.StorageUploader;
 import com.encore.backend.vo.UserVO;
 
 import org.modelmapper.ModelMapper;
@@ -19,12 +19,12 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
-    private final S3Uploader s3Uploader;
+    private final StorageUploader storageUploader;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, S3Uploader s3Uploader) {
+    public UserServiceImpl(UserRepository userRepository, StorageUploader storageUploader) {
         this.userRepository = userRepository;
-        this.s3Uploader = s3Uploader;
+        this.storageUploader = storageUploader;
     }
 
     @Override
@@ -77,8 +77,20 @@ public class UserServiceImpl implements UserService {
         UserVO userVO = mapper.map(userDto, UserVO.class);
         boolean result = true;
         try {
-            if (profileImage.getOriginalFilename().length() > 0)
-                userVO.setProfileImage(s3Uploader.upload(profileImage, "profileImages", email));
+            UserVO existingUser = userRepository.findByEmail(email);
+            if (existingUser == null) {
+                throw new UsernameNotFoundException("찾을 수 없는 사용자입니다.");
+            }
+
+            boolean hasNewProfileImage = profileImage != null && profileImage.getOriginalFilename() != null
+                    && profileImage.getOriginalFilename().length() > 0;
+
+            if (hasNewProfileImage) {
+                userVO.setProfileImage(storageUploader.upload(profileImage, "profileImages", email));
+            } else {
+                userVO.setProfileImage(existingUser.getProfileImage());
+            }
+
             result = userRepository.updateUserByEmail(email, userVO);
         } catch (IOException e) {
             e.printStackTrace();
@@ -91,7 +103,7 @@ public class UserServiceImpl implements UserService {
     public boolean deleteUserByEmail(String email) {
         boolean result = true;
         try {
-            s3Uploader.remove(email);
+            storageUploader.remove(email);
             result = userRepository.deleteUserByEmail(email);
         } catch (Exception e) {
             e.printStackTrace();

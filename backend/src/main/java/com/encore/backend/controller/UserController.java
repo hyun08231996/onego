@@ -49,7 +49,7 @@ public class UserController {
 
     @PutMapping("/users/{email}")
     public ResponseEntity<String> updateUser(@PathVariable String email, @RequestPart UserDto user,
-            @RequestPart MultipartFile profileImageFile) {
+            @RequestPart(required = false) MultipartFile profileImageFile) {
         boolean result = userService.updateUserByEmail(email, user, profileImageFile);
         return ResponseEntity.status(result ? HttpStatus.CREATED : HttpStatus.NO_CONTENT)
                 .body("update user " + (result ? "suceess" : "fail"));

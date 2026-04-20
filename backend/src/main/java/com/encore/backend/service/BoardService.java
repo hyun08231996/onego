@@ -8,7 +8,7 @@ import java.util.Map;
 
 import com.encore.backend.dto.BoardDTO;
 import com.encore.backend.repository.board.BoardRepository;
-import com.encore.backend.s3.S3Uploader;
+import com.encore.backend.storage.StorageUploader;
 import com.encore.backend.vo.BoardVO;
 import com.encore.backend.vo.Comment;
 
@@ -27,12 +27,12 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class BoardService {
     private BoardRepository repo;
-    private final S3Uploader s3Uploader;
+    private final StorageUploader storageUploader;
 
     @Autowired
-    public BoardService(BoardRepository repo, S3Uploader s3Uploader) {
+    public BoardService(BoardRepository repo, StorageUploader storageUploader) {
         this.repo = repo;
-        this.s3Uploader = s3Uploader;
+        this.storageUploader = storageUploader;
     }
 
     public List<BoardVO> selectBoard(Map<String, Object> parameters) {
@@ -83,16 +83,26 @@ public class BoardService {
         BoardVO board = mapper.map(boardDTO, BoardVO.class);
         board.setId(boardDTO.getBoardId());
         try {
+            boolean hasNewTitleImage = titleImageFile != null && titleImageFile.getOriginalFilename() != null
+                    && titleImageFile.getOriginalFilename().length() > 0;
+
             if (board.getId() == null) {
                 BoardVO ret = repo.insert(board);
-                board.setTitleImage(titleImageFile.getOriginalFilename().length() == 0 ? ""
-                        : s3Uploader.upload(titleImageFile, "titleImages", ret.getId()));
+                board.setTitleImage(
+                        hasNewTitleImage ? storageUploader.upload(titleImageFile, "titleImages", ret.getId()) : "");
                 ret = repo.save(board);
                 return true;
             } else {
-                boolean check = repo.existsById(board.getId());
-                if (!check)
+                BoardVO existingBoard = repo.findById(board.getId(), PageRequest.of(0, 1)).getContent().stream()
+                        .findFirst().orElse(null);
+                if (existingBoard == null)
                     return false;
+
+                if (hasNewTitleImage) {
+                    board.setTitleImage(storageUploader.upload(titleImageFile, "titleImages", board.getId()));
+                } else {
+                    board.setTitleImage(existingBoard.getTitleImage());
+                }
 
                 repo.save(board);
                 return true;

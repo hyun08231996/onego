@@ -44,7 +44,8 @@ public class BoardController {
     }
 
     @RequestMapping(value = "/board", method = { RequestMethod.POST, RequestMethod.PUT })
-    public ResponseEntity<String> upsertBoard(@RequestPart BoardDTO board, @RequestPart MultipartFile titleImageFile) {
+    public ResponseEntity<String> upsertBoard(@RequestPart BoardDTO board,
+            @RequestPart(required = false) MultipartFile titleImageFile) {
         boolean result = service.upsertBoard(board, titleImageFile);
         return ResponseEntity.status(result ? HttpStatus.CREATED : HttpStatus.NO_CONTENT)
                 .body("insert board " + (result ? "suceess" : "fail"));
