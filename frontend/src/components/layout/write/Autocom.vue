@@ -27,7 +27,7 @@
 		<span style="position:absolute;right:4px;"><v-btn @click="showAutocom" icon><v-icon>mdi-chevron-down</v-icon></v-btn></span>
 		<div class="autocom-list">
 		  <div v-if="suggestions.length === 0" class="autocom-empty">
-			AI 자동완성 문장이 이곳에 표시됩니다.
+			문장 자동완성 버튼을 클릭하면 AI 자동완성 문장이 이곳에 표시됩니다.
 		  </div>
 		  <v-tooltip
 			v-for="(sentence, index) in suggestions"
