@@ -29,6 +29,11 @@ services:
         build:
             dockerfile: Dockerfile
             context: ./frontend
+            args:
+                VUE_APP_AWS_REGION: ${VUE_APP_AWS_REGION}
+                VUE_APP_COGNITO_IDENTITY_POOL_ID: ${VUE_APP_COGNITO_IDENTITY_POOL_ID}
+                VUE_APP_COGNITO_USER_POOL_ID: ${VUE_APP_COGNITO_USER_POOL_ID}
+                VUE_APP_COGNITO_APP_CLIENT_ID: ${VUE_APP_COGNITO_APP_CLIENT_ID}
         stdin_open: true
     nginx:
         restart: always
@@ -63,8 +68,8 @@ services:
             dockerfile: Dockerfile
             context: ./ai
         environment:
-            GEMINI_API_KEY: ${GEMINI_API_KEY}
-            GEMINI_MODEL: ${GEMINI_MODEL}
+            HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY}
+            HUGGINGFACE_MODEL: ${HUGGINGFACE_MODEL}
         volumes:
             - ./ai:/app
 

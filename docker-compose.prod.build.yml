@@ -1,10 +1,21 @@
 services:
   frontend:
     image: ${FRONTEND_IMAGE}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VUE_APP_AWS_REGION: ${VUE_APP_AWS_REGION}
+        VUE_APP_COGNITO_IDENTITY_POOL_ID: ${VUE_APP_COGNITO_IDENTITY_POOL_ID}
+        VUE_APP_COGNITO_USER_POOL_ID: ${VUE_APP_COGNITO_USER_POOL_ID}
+        VUE_APP_COGNITO_APP_CLIENT_ID: ${VUE_APP_COGNITO_APP_CLIENT_ID}
     restart: unless-stopped
 
   nginx:
     image: ${NGINX_IMAGE}
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       - frontend
@@ -15,6 +26,9 @@ services:
 
   backend:
     image: ${BACKEND_IMAGE}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       MONGODB_URI: ${MONGODB_URI}
@@ -23,6 +37,9 @@ services:
 
   ai:
     image: ${AI_IMAGE}
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY}
