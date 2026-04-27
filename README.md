@@ -274,10 +274,20 @@ Production image build:
 docker compose -f docker-compose.prod.build.yml build
 ```
 
+The production CI builds and pushes `frontend`, `backend`, and `nginx` on every push to `main`. The `ai` image is rebuilt only when files under `ai/`, `docker-compose.prod.build.yml`, or the production CI workflow change. For manual workflow runs, use the `build_ai` input when the existing AI image should be replaced.
+
 Production run with prebuilt images:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d
+```
+
+After a VM deployment, prune unused local Docker data to remove old image layers:
+
+```bash
+docker container prune -f
+docker image prune -af
+docker builder prune -af
 ```
 
 Seed production MongoDB:
