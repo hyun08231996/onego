@@ -1,8 +1,31 @@
-<p align="center">
-  <img alt="ONEGO" src="https://user-images.githubusercontent.com/81090746/147493035-1f8652ad-0524-4785-a75e-d37da95846c7.png" />
-</p>
+
 
 # ONEGO
+
+<br />
+
+<p align="center">
+  <img width="125" height="auto" alt="Subject" src="https://github.com/user-attachments/assets/1bd7069a-a70b-43d8-aeae-7571469a75b5" />
+  <div align="center">
+    An AI writing blog platform.
+  </div>
+  <div align="center">
+  <a href="https://www.onego.qzz.io" target="_blank">
+    <img src="https://custom-icon-badges.demolab.com/badge/Visit%20ONEGO-grey.svg?logo=link-external&logoColor=white" />
+  </a>
+  </div>
+</p>
+
+#
+
+> DEMO LOGIN:
+> 
+> Email: `test@example.com`<br />
+> Password: `test1234`
+
+#
+
+## Overview
 
 <img width="1927" height="816" alt="image" src="https://github.com/user-attachments/assets/e04bd2ca-cdb9-40ce-b495-834c35558ecb" />
 
@@ -13,14 +36,8 @@ ONEGO is an AI-assisted writing and blogging platform built for people who have 
 
 The application combines a Vue writing experience, a Spring Boot API, MongoDB persistence, AWS Cognito authentication, Google Cloud Storage media uploads, and a Flask AI service for Korean writing assistance.
 
-[Visit ONEGO](https://www.onego.qzz.io)
 
-> DEMO LOGIN:
-> 
-> Email: `test@example.com`<br />
-> Password: `test1234`
-
-
+<br />
 
 
 ## My Role
@@ -28,6 +45,8 @@ The application combines a Vue writing experience, a Spring Boot API, MongoDB pe
 - Built front-end pages and reusable UI pieces with Vue.js, TypeScript, HTML, and CSS.
 - Designed and implemented the header, sidebar, footer, search, search results, account settings, edit profile, my profile, change password, saved blogs, posted blogs, and blog writing pages.
 - Added writing-page tools for font styling, content folder management, memos, tags, image upload, preview, and post editing.
+
+<br />
 
 ## Screenshots/Demo
 
@@ -80,6 +99,8 @@ The application combines a Vue writing experience, a Spring Boot API, MongoDB pe
 </table>
 
 
+<br />
+
 ## Notable Features
 
 ### AI-Powered Writing
@@ -111,19 +132,24 @@ With one action, the AI service can generate:
 - AI writing support through Flask endpoints for sentence completion, subtitle summarization, and tag generation.
 - Docker Compose setup for local builds, production builds, Nginx routing, MongoDB seeding, and service deployment.
 
+<br />
+
 ## Project Links
 
 - [Project summary](https://verdant-colt-ad5.notion.site/Encore-Playdata-AI-Writing-Web-Development-dda95b301f224c15be4bc4afc91c7417)
+
+<br />
 
 ## Architecture
 
 <img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/7a9a467b-acc7-463a-91ac-36b44b8e9e82" />
 
-
+<br />
 
 > [!NOTE]
 > Note that the original project used AWS EC2 and AWS S3 
 
+<br />
 
 ## Tech Stack
 
@@ -164,6 +190,8 @@ With one action, the AI service can generate:
 ![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Nginx](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
 
+<br />
+
 ## Project Structure
 
 ```txt
@@ -176,6 +204,8 @@ scripts/        MongoDB seed data
 docker-compose*.yml
 Dockerrun.aws.json
 ```
+
+<br />
 
 ## Environment
 
@@ -206,6 +236,8 @@ For the local Docker build, the backend mounts Google Application Default Creden
 
 Run `gcloud auth application-default login` first if that file does not exist.
 
+<br />
+
 ## Run Locally With Docker
 
 Build and run the full local stack:
@@ -221,6 +253,8 @@ http://localhost:8080
 ```
 
 The local compose file starts MongoDB, seeds sample data from `scripts/seed-mongo.js`, builds the frontend/backend/AI images, and routes requests through Nginx.
+
+<br />
 
 ## Run Services Manually
 
@@ -250,6 +284,8 @@ python start_flask.py
 ```
 
 When running services manually, make sure `/api` and `/api/ai` requests are proxied to the backend and AI service. The Docker/Nginx setup already handles this routing.
+
+<br />
 
 ## Useful Commands
 
@@ -297,6 +333,8 @@ Seed production MongoDB:
 docker compose -f docker-compose.prod.yml --profile seed run --rm seed
 ```
 
+<br />
+
 ## API Notes
 
 The backend exposes board, user, comment, follow, scrap, like, and temporary draft endpoints behind `/api`.
@@ -310,6 +348,8 @@ POST /api/ai/tagger       JSON: {"contents": ["..."]}
 ```
 
 Swagger metadata is configured as `Onego API` in the Spring Boot backend.
+
+<br />
 
 ## Deployment
 
